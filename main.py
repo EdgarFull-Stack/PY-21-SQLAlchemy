@@ -12,3 +12,4 @@ class Projektas(Base):
     kaina = Column(Float)
 
 Base.metadata.create_all(engine)
+# Example
