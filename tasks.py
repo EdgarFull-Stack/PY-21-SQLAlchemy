@@ -1,5 +1,6 @@
 from sqlalchemy import Column, create_engine, Integer, String
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 # Task 1
 engine = create_engine("sqlite:///mokykla.db")
 Base = declarative_base()
@@ -112,14 +113,16 @@ istrinti_mokini(1)
 print('-'*40)
 #  Funckija filtruota mokini pagal varda
 def filtruoti_mokini_varda(vardas):
-    mokinys = session.query(Mokinys).filter_by(vardas=vardas).first()
-    if mokinys:
+    try:
+        mokinys = session.query(Mokinys).filter_by(vardas=vardas).one()
         print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde} {mokinys.id}')
-    else:
+    except NoResultFound:
         print('Tokio mokinio nera')
+    except MultipleResultsFound:
+        print('Rasta daugiau nei vienas mokinys su tokiu vardu')
 #  Funckija filtruoti mokini pagal pavarde "P" raide pradzioje
 def filtruoti_pagal_pavarde():
-    mokiniai = session.query(Mokinys).filter(Mokinys.pavarde.ilike('P%'))
+    mokiniai = session.query(Mokinys).filter(Mokinys.pavarde.ilike('P%')).all()
     if mokiniai:
         for mokinys in mokiniai :
             print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde}')
@@ -128,12 +131,7 @@ def filtruoti_pagal_pavarde():
 filtruoti_mokini_varda('Jonas')
 filtruoti_pagal_pavarde()
 print('-'*40)
-def filtruoti_mokini_varda(vardas):
-    mokinys = session.query(Mokinys).filter_by(vardas=vardas).first()
-    if mokinys:
-        print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde} {mokinys.id}')
-    else:
-        print('Tokio mokinio nera')
+
 #  Funckija filtruota mokytoja pagal varda "S" raide pradzioje
 def filtruoti_mokytoja_pagal_varda():
     mokytojai = session.query(Mokytojas).filter(Mokytojas.vardas.ilike('%s'))
