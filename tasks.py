@@ -1,6 +1,7 @@
 from sqlalchemy import Column, create_engine, Integer, String
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy import func
 # Task 1
 engine = create_engine("sqlite:///mokykla.db")
 Base = declarative_base()
@@ -37,17 +38,19 @@ def ar_mokytojas_yra(vardas, pavarde):
         if row.vardas == vardas and row.pavarde == pavarde:
             return True
 
-# # Pridedame mokinius, jei jų dar nėra
-# mokiniai = [
-#     ("Jonas", "Jonaitis", 5),
-#     ("Petras", "Petraitis", 6),
-#     ("Asta", "Astaitė", 7)
-# ]
+# Pridedame mokinius, jei jų dar nėra
+mokiniai = [
+    ("Jonas", "Jonaitis", 5),
+    ("Petras", "Petraitis", 6),
+    ("Asta", "Astaitė", 7),
+    ("Edgar", "Lip", 10),
+    ("Jack","Jack",10)
+]
 #
-# for vardas, pavarde, klase in mokiniai:
-#     if not ar_mokinys_yra(vardas, pavarde):
-#         session.add(Mokinys(vardas=vardas, pavarde=pavarde, klase=klase))
-#
+for vardas, pavarde, klase in mokiniai:
+    if not ar_mokinys_yra(vardas, pavarde):
+        session.add(Mokinys(vardas=vardas, pavarde=pavarde, klase=klase))
+
 # # Pridedame mokytojus
 # mokytojai = [
 #     Mokytojas(vardas="Rasa", pavarde="Rasaitė", dalykas="Matematika"),
@@ -141,3 +144,28 @@ def filtruoti_mokytoja_pagal_varda():
     else:
         print('Mokytojo su pavardes pabaiga s nerasta')
 filtruoti_mokytoja_pagal_varda()
+
+print('-'*40)
+# Funkcija kuri isveda mokinius pagal klase (didejancia tvarka)
+def mokiniai_pagal_klase():
+    mokiniai = session.query(Mokinys).order_by(Mokinys.klase).all()
+    for mokinys in mokiniai:
+        print(f'{mokinys.vardas} {mokinys.pavarde} klase: {mokinys.klase}')
+mokiniai_pagal_klase()
+print('-'*40)
+# Funkcija kuri skaiciuoja kiek yra mokiniu kiekvienoje klaseje
+def mokiniu_skaicius_klaseje():
+    suma = session.query(Mokinys.klase, func.count(Mokinys.id)).group_by(Mokinys.klase).all()
+    for klase, kiekis in suma:
+        print(f'Klase: {klase}, mokiniu skaicius: {kiekis}')
+mokiniu_skaicius_klaseje()
+# Funkcija koks mokiniu vidurkis klaseje
+def vidutinis_mokiniu_skaicius():
+    bendras_mokiniu_skaicius = session.query(Mokinys).count()
+    skirtingu_klasiu_skaicius = session.query(Mokinys.klase).distinct().count()
+    if skirtingu_klasiu_skaicius > 0:
+        vidurkis = bendras_mokiniu_skaicius / skirtingu_klasiu_skaicius
+    else:
+        vidurkis = 0
+    print(f'Vidutinis mokiniu skaicius klaseje: {vidurkis:.2f}')
+vidutinis_mokiniu_skaicius()
