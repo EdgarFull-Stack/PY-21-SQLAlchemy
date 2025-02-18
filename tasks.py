@@ -26,31 +26,120 @@ from sqlalchemy.orm import sessionmaker
 Session = sessionmaker(bind=engine)
 session = Session()
 # 2
-def prideti_mokini(vardas, pavarde, klase):
-    egzistuojantis = session.query(Mokinys).filter_by(vardas=vardas, pavarde=pavarde, klase=klase).first()
-    if not egzistuojantis:
-        naujas_mokinys = Mokinys(vardas=vardas, pavarde=pavarde, klase=klase)
-        session.add(naujas_mokinys)
+# Funkcija, kuri patikrina, ar mokinys jau yra duomenų bazėje
+def ar_mokinys_yra(vardas, pavarde):
+    return session.query(Mokinys).filter_by(vardas=vardas, pavarde=pavarde).first() is not None
+
+def ar_mokytojas_yra(vardas, pavarde):
+    mokytojai = session.query(Mokytojas).all()
+    for row in mokytojai:
+        if row.vardas == vardas and row.pavarde == pavarde:
+            return True
+
+# # Pridedame mokinius, jei jų dar nėra
+# mokiniai = [
+#     ("Jonas", "Jonaitis", 5),
+#     ("Petras", "Petraitis", 6),
+#     ("Asta", "Astaitė", 7)
+# ]
+#
+# for vardas, pavarde, klase in mokiniai:
+#     if not ar_mokinys_yra(vardas, pavarde):
+#         session.add(Mokinys(vardas=vardas, pavarde=pavarde, klase=klase))
+#
+# # Pridedame mokytojus
+# mokytojai = [
+#     Mokytojas(vardas="Rasa", pavarde="Rasaitė", dalykas="Matematika"),
+#     Mokytojas(vardas="Tomas", pavarde="Tomaitis", dalykas="Fizika")
+# ]
+#
+# session.add_all(mokytojai)
+
+# Išsaugome pakeitimus
+session.commit()
+
+# Funkcija mokinių sąrašo išvedimui
+def spausdinti_mokinius():
+    mokiniai = session.query(Mokinys).all()
+    for mokinys in mokiniai:
+        print(f"{mokinys.vardas} {mokinys.pavarde}, klasė: {mokinys.klase}")
+
+# Funkcija mokytojų sąrašo išvedimui
+def spausdinti_mokytojus():
+    mokytojai = session.query(Mokytojas).all()
+    for mokytojas in mokytojai:
+        print(f"{mokytojas.vardas} {mokytojas.pavarde}, dėsto: {mokytojas.dalykas}")
+
+# Testuojame funkcijas
+print("Mokiniai:")
+spausdinti_mokinius()
+
+print("\nMokytojai:")
+spausdinti_mokytojus()
+print('-'*40)
+# Funkcija istrina mokini
+def istrinti_mokini(id):
+    mokinys = session.query(Mokinys).filter_by(id=id).first()
+    if mokinys:
+        session.delete(mokinys)
         session.commit()
-        print(f'Mokinys {vardas} {pavarde} (klase: {klase}) pridėtas.')
+        print(f'Mokinys {id} istrintas')
     else:
-        print(f'Mokinys {vardas} {pavarde} jau egzistuoja duomenų bazeje.')
+        print(f'Mokinys su {id} ID nerastas')
+# Funkcija istrina mokytoja
+def istrinti_mokytoja(id):
+    mokytojas = session.query(Mokytojas).filter_by(id=id).first()
+    if mokytojas:
+        session.delete(mokytojas)
+        session.commit()
+        print(f'Mokytojas {id} istrintas')
+    else:
+        print(f'Mokytojas su {id} ID nerastas')
+#  Funkcija trinti baigusius mokykla
+def istrinti_baigusius():
+    mokiniai = session.query(Mokinys).filter_by(klase = 12).all()
+    if mokiniai:
+        for mokinys in mokiniai:
+            session.delete(mokinys)
+            session.commit()
+        print('Visi kas baige 12 klasiu istrinti')
+    else:
+        print('Nera kas baiges 12 klase')
 
-# 3
-prideti_mokini("Jonas", "Jonaitis", 9)
-prideti_mokini("Edgar", "Lip", 10)
-prideti_mokini("Tomas", "Tomaitis", 11)
-prideti_mokini("Jonas", "Jonaitis", 9)
-# mokytojas1 = Mokytojas(id = 777, vardas = 'Darius',pavarde = 'Das', dalykas = 'Python')
-# mokytojas2 = Mokytojas(id = 767, vardas = 'Dar',pavarde = 'Das', dalykas = 'SQL')
-# session.add(mokytojas1)
-# session.add(mokytojas2)
-# session.commit()
-#4
-visi_mokiniai = session.query(Mokinys).all()
-for mokiniai in visi_mokiniai:
-    print(f'Id: {mokiniai.id}, Vardas: {mokiniai.vardas}, Pavarde: {mokiniai.pavarde}, Klase: {mokiniai.klase}')
-
-visi_mokytojai = session.query(Mokytojas).all()
-for mokytojas in visi_mokytojai:
-    print(f'Id: {mokytojas.id}, Vardas: {mokytojas.vardas}, Pavarde: {mokytojas.pavarde}, Dalykas: {mokytojas.dalykas}')
+istrinti_baigusius()
+istrinti_mokytoja(1)
+istrinti_mokini(1)
+print('-'*40)
+#  Funckija filtruota mokini pagal varda
+def filtruoti_mokini_varda(vardas):
+    mokinys = session.query(Mokinys).filter_by(vardas=vardas).first()
+    if mokinys:
+        print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde} {mokinys.id}')
+    else:
+        print('Tokio mokinio nera')
+#  Funckija filtruoti mokini pagal pavarde "P" raide pradzioje
+def filtruoti_pagal_pavarde():
+    mokiniai = session.query(Mokinys).filter(Mokinys.pavarde.ilike('P%'))
+    if mokiniai:
+        for mokinys in mokiniai :
+            print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde}')
+    else:
+        print('Mokiniu su pavarde is P nerasta')
+filtruoti_mokini_varda('Jonas')
+filtruoti_pagal_pavarde()
+print('-'*40)
+def filtruoti_mokini_varda(vardas):
+    mokinys = session.query(Mokinys).filter_by(vardas=vardas).first()
+    if mokinys:
+        print(f'Rastas mokinys: {mokinys.vardas} {mokinys.pavarde} {mokinys.id}')
+    else:
+        print('Tokio mokinio nera')
+#  Funckija filtruota mokytoja pagal varda "S" raide pradzioje
+def filtruoti_mokytoja_pagal_varda():
+    mokytojai = session.query(Mokytojas).filter(Mokytojas.vardas.ilike('%s'))
+    if mokytojai:
+        for mokytojas in mokytojai :
+            print(f'Rastas mokytojas: {mokytojas.vardas} {mokytojas.pavarde}')
+    else:
+        print('Mokytojo su pavardes pabaiga s nerasta')
+filtruoti_mokytoja_pagal_varda()
